@@ -1,1 +1,7 @@
 /.svn
+*.iml
+.idea/
+/composer.lock
+/index.php
+/vendor
+/tmp
