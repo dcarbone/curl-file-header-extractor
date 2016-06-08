@@ -1,32 +1,38 @@
 {
-    "name": "dcarbone/curl-file-header-extractor",
-    "description": "Utility to extract headers from PHP CURL to file request.",
-    "type": "library",
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "Daniel Carbone",
-            "email": "daniel.p.carbone@gmail.com"
-        }
-    ],
-    "keywords": [
-        "curl",
-        "file",
-        "http",
-        "header",
-        "headers",
-        "response",
-        "php",
-        "extractor"
-    ],
-
-    "require": {
-        "php": ">=5.3.3"
-    },
-
-    "autoload": {
-        "psr-4": {
-            "DCarbone\\": "src/"
-        }
+  "name": "dcarbone/curl-header-extractor",
+  "description": "Utility to extract headers from PHP CURL to file request.",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Daniel Carbone",
+      "email": "daniel.p.carbone@gmail.com"
     }
+  ],
+  "keywords": [
+    "curl",
+    "file",
+    "http",
+    "header",
+    "headers",
+    "response",
+    "php",
+    "extractor"
+  ],
+  "require": {
+    "php": ">=5.3.3"
+  },
+
+  "require-dev": {
+    "phpunit/phpunit": "4.*"
+  },
+
+  "replace": {
+    "dcarbone/curl-file-header-extractor": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "DCarbone\\": "src/"
+    }
+  }
 }

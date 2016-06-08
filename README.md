@@ -1,5 +1,5 @@
-# curl-file-header-extractor
-Utility to extract headers from PHP CURL to file request.
+# curl-header-extractor
+Utility to extract headers from PHP CURL request.
 
 # Installation
 
@@ -8,7 +8,7 @@ While it is advisable to use [Composer](https://getcomposer.org/), this lib is s
 Composer Require entry:
 ```json
 {
-    "dcarbone/curl-file-header-extractor": "1.0.*"
+    "dcarbone/curl-header-extractor": "2.0.*"
 }
 ```
 
@@ -16,11 +16,13 @@ Composer Require entry:
 
 There are 3 methods available:
 
-### [getHeaderAndBodyFromFile](./src/CURLFileHeaderExtractor.php#L195)
+### [getHeaderAndBody](./src/CURLHeaderExtractor.php#L163)
 
-This method accepts a single argument that may either be the full path to the file
-or a file resource created with [fopen](http://php.net/manual/en/function.fopen.php) with at least
-read permissions.
+This method accepts a single argument that may be:
+
+- Full path to the file
+- File resource created with [fopen](http://php.net/manual/en/function.fopen.php) with at least read permissions.
+- String of response data
 
 The response will be an array with the following structure:
 
@@ -34,7 +36,7 @@ array(
 #### Example: 
 
 ```php
-list($headers, $body) = \DCarbone\CURLFileHeaderExtractor::getHeaderAndBodyFromFile($file);
+list($headers, $body) = \DCarbone\CURLHeaderExtractor::getHeaderAndBody($input);
 ```
 
 where `$headers` will be an array of headers, or NULL if no headers were found,
@@ -42,12 +44,12 @@ and `$body` will be the entire contents of the body.
 
 #### Note:
 
-This method CAN be very expensive to use if you are working with particularly large files, as the end
+This method CAN be very expensive to use if you are working with particularly large responses, as the end
 result will be the entire contents of the file loaded into memory.
 
 If you wish to extract JUST the headers, the below methods might serve you better.
 
-### [extractHeadersAndBodyStartOffset](./src/CURLFileHeaderExtractor.php#L38)
+### [extractHeadersAndBodyStartOffset](./src/CURLHeaderExtractor.php#L78)
 
 This method will return an array with the following structure:
 
@@ -61,41 +63,41 @@ array(
 #### Example: 
 
 ```php
-list($headers, $bodyByteOffset) = \DCarbone\CURLFileHeaderExtractor::extractHeadersAndBodyStartOffset($file);
+list($headers, $bodyByteOffset) = \DCarbone\CURLHeaderExtractor::extractHeadersAndBodyStartOffset($input);
 ```
 
 If no headers were seen in the file, `$headers` in the above example will be NULL and the byte offset
 will be 0.
 
-### [removeHeadersAndMoveFile](./src/CURLFileHeaderExtractor.php#L134)
+### [removeHeadersAndMoveFile](./src/CURLHeaderExtractor.php#L92)
 
 This method will strip the file of the headers, copy the body to a new file, and then delete the old file.
 
 #### Example:
 
 ```php
-\DCarbone\CURLFileHeaderExtractor::removeHeadersAndMoveFile($file, 'my_new_filename.ext');
+\DCarbone\CURLHeaderExtractor::removeHeadersAndMoveFile($file, 'my_new_filename.ext');
 ```
 
-If you executed the [extractHeadersAndBodyStartOffset](./src/CURLFileHeaderExtractor.php#L38) method
+If you executed the [extractHeadersAndBodyStartOffset](./src/CURLHeaderExtractor.php#L78) method
 already, you may pass in the body start offset integer in as the 3rd argument.
 
 ## Invoking
 
 To make this class easier to work with as a "helper", it implements the 
 [PHP magic method __invoke](http://php.net/manual/en/language.oop5.magic.php#object.invoke) (you
-can see the implementation [here](./src/CURLFileHeaderExtractor.php#L24)).
+can see the implementation [here](./src/CURLHeaderExtractor.php#L64)).
 
 This allows you to do something like this:
 
 ```php
-$extractor = new \DCarbone\CURLFileHeaderExtractor();
+$extractor = new \DCarbone\CURLHeaderExtractor();
 
-list($headers, $body) = $extractor($file);
+list($headers, $body) = $extractor($input);
 ```
 
 You can, of course, access the other methods as you normally would any static method:
 
 ```php
-list($headers, $bodyByteOffset) = $extractor::extractHeadersAndBodyStartOffset($file);
+list($headers, $bodyByteOffset) = $extractor::extractHeadersAndBodyStartOffset($input);
 ```
