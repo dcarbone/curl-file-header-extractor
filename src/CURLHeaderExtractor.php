@@ -24,9 +24,6 @@ class CURLHeaderExtractor
     const PROCMODE_STRING = 200;
 
     /** @var int */
-    public static $isStringInputLengthLimit = 512;
-
-    /** @var int */
     public static $maxHeaderLength = 8192;
 
     // Setup Vars
@@ -342,12 +339,7 @@ class CURLHeaderExtractor
         }
         else if (is_string($input))
         {
-            if (self::$isStringInputLengthLimit <= mb_strlen($input))
-            {
-                self::$_input = $input;
-                self::$_mode = self::PROCMODE_STRING;
-            }
-            else if (is_file($input))
+            if (@is_file($input))
             {
                 self::$_mode = self::PROCMODE_FILE;
                 self::$_input = $input;
@@ -360,6 +352,11 @@ class CURLHeaderExtractor
                         $input
                     ));
                 }
+            }
+            else
+            {
+                self::$_input = $input;
+                self::$_mode = self::PROCMODE_STRING;
             }
         }
         else
