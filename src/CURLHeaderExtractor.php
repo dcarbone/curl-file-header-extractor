@@ -11,7 +11,7 @@
 */
 
 /**
- * Class CURLFileHeaderExtractor
+ * Class CURLHeaderExtractor
  * @package DCarbone
  * @author Daniel Carbone (daniel.p.carbone@gmail.com)
  */
@@ -25,6 +25,9 @@ class CURLHeaderExtractor
 
     /** @var int */
     public static $maxHeaderLength = 8192;
+    
+    /** @var string */
+    public static $mbEncoding = '8bit';
 
     // Setup Vars
 
@@ -180,7 +183,7 @@ class CURLHeaderExtractor
         {
             return array(
                 $headers,
-                mb_substr(self::$_input, self::$_bodyStartByteOffset)
+                mb_substr(self::$_input, self::$_bodyStartByteOffset, -1, self::$mbEncoding)
             );
 
         }
@@ -225,16 +228,16 @@ class CURLHeaderExtractor
     private static function _processString()
     {
         $line = '';
-        $totalLength = mb_strlen(self::$_input);
+        $totalLength = mb_strlen(self::$_input, self::$mbEncoding);
         for ($i = 0; $i < $totalLength; )
         {
             // TODO: this could probably be improved...
-            if (mb_strlen($line) > self::$maxHeaderLength && self::$_headerNum > 0)
+            if (mb_strlen($line, self::$mbEncoding) > self::$maxHeaderLength && self::$_headerNum > 0)
                 return;
 
             if (false === strpos($line, "\r\n"))
             {
-                $line = sprintf('%s%s', $line, mb_substr(self::$_input, $i++, 1));
+                $line = sprintf('%s%s', $line, mb_substr(self::$_input, $i++, 1, self::$mbEncoding));
             }
             else
             {
@@ -281,7 +284,7 @@ class CURLHeaderExtractor
         }
 
         // Keep track of our current byte offset
-        self::$_bodyStartByteOffset += mb_strlen($line);
+        self::$_bodyStartByteOffset += mb_strlen($line, self::$mbEncoding);
 
         // Keep track of consecutive "\r\n" character pairs
         if ((self::$_rns === 0 && substr($line, -2) === "\r\n") || $line === "\r\n")
