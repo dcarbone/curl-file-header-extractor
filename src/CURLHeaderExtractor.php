@@ -309,7 +309,9 @@ class CURLHeaderExtractor
     {
         self::_reset();
 
-        if ('resource' === gettype($input))
+        $inputType = gettype($input);
+
+        if ('resource' === $inputType)
         {
             $meta = stream_get_meta_data($input);
             if (isset($meta['uri']))
@@ -324,7 +326,7 @@ class CURLHeaderExtractor
                 throw new \InvalidArgumentException('CURLHeaderExtractor - Could not extract filepath from resource.');
             }
         }
-        else if (is_string($input))
+        else if ('string' === $inputType)
         {
             if (@is_file($input))
             {
@@ -350,7 +352,7 @@ class CURLHeaderExtractor
         {
             throw new \InvalidArgumentException(sprintf(
                 'CURLHeaderExtractor - Invalid input seen. Expected file resource with read permissions, string filepath, or string curl response value.  %s seen.',
-                gettype($input)
+                $inputType
             ));
         }
     }
@@ -360,7 +362,7 @@ class CURLHeaderExtractor
      */
     private static function _reset()
     {
-        if (self::$_mode === self::PROCMODE_FILE && self::$_closeHandle && 'resource' === gettype(self::$_fh))
+        if (self::PROCMODE_FILE === self::$_mode && self::$_closeHandle && 'resource' === gettype(self::$_fh))
             fclose(self::$_fh);
 
         self::$_input = null;
