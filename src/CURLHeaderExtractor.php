@@ -78,7 +78,13 @@ class CURLHeaderExtractor
     public static function extractHeadersAndBodyStartOffset($input)
     {
         self::_setup($input);
-        self::_process();
+
+        if (self::PROCMODE_FILE === self::$_mode)
+            self::_processFile();
+        else if (self::PROCMODE_STRING === self::$_mode)
+            self::_processString();
+        else
+            throw new \DomainException('CURLHeaderExtractor - Invalid state');
 
         return array(self::$_headers, self::$_bodyStartByteOffset);
     }
@@ -187,25 +193,6 @@ class CURLHeaderExtractor
 
             default:
                 return array(null, null);
-        }
-    }
-
-    /**
-     * Do stuff
-     */
-    private static function _process()
-    {
-        switch(self::$_mode)
-        {
-            case self::PROCMODE_FILE:
-                self::_processFile();
-                break;
-            case self::PROCMODE_STRING:
-                self::_processString();
-                break;
-
-            default:
-                throw new \DomainException('CURLHeaderExtractor - Invalid state');
         }
     }
 
