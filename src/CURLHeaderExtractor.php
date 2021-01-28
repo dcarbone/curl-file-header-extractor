@@ -37,7 +37,7 @@ class CURLHeaderExtractor
     /** @var string|resource */
     private static $_input = null;
     /** @var int */
-    private static int $_mode;
+    private static int $_mode = 0;
     /** @var bool */
     private static bool $_closeHandle = true;
     /** @var null|resource */
