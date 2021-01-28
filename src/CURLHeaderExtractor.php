@@ -19,6 +19,10 @@ namespace DCarbone;
  */
 class CURLHeaderExtractor
 {
+    private const HTTP_START = 'HTTP/';
+    private const RN         = "\r\n";
+    private const COLON      = ':';
+
     private const PROCESSING = 10;
     private const DONE       = 20;
 
@@ -243,7 +247,7 @@ class CURLHeaderExtractor
      */
     private static function _processLine(string $line): int
     {
-        $httpPos = strpos($line, 'HTTP/');
+        $httpPos = strpos($line, self::HTTP_START);
 
         // If we do not have headers in the output...
         if (0 === self::$_lineNum && 0 !== $httpPos) {
@@ -269,13 +273,13 @@ class CURLHeaderExtractor
         self::$_bodyStartByteOffset += strlen($line);
 
         // Keep track of consecutive "\r\n" character pairs
-        if ((0 === self::$_rns && "\r\n" === substr($line, -2)) || "\r\n" === $line) {
+        // tests for "\r\n" and ".....\r\n"
+        if (self::RN === $line || (0 === self::$_rns && self::RN === substr($line, -2))) {
             self::$_rns++;
         }
 
         // If we've reached 2, we should have successfully parsed a header.
-        // Store as header, reset inner header line count, consecutive rn count, and
-        // iterate noticed header count.
+        // Store as header, reset inner header line count, consecutive rn count, and iterate noticed header count.
         if (2 === self::$_rns) {
             self::$_headers[] = self::$_possibleHeader;
             self::$_headerNum++;
@@ -285,11 +289,17 @@ class CURLHeaderExtractor
         }
 
         // The first line in a header will not have a colon...
-        $colonPos = strpos($line, ':');
+        $colonPos = strpos($line, self::COLON);
         if (false === $colonPos) {
+            // this is a be an "HTTP/1.1 {code} {status}\r\n" line
             self::$_possibleHeader[] = trim($line);
         } else {
-            self::$_possibleHeader[substr($line, 0, $colonPos)] = trim(substr($line, $colonPos + 1));
+            // this is a "{header}: {value}\r\n" line
+            $key = substr($line, 0, $colonPos);
+            if (!isset(self::$_possibleHeader[$key])) {
+                self::$_possibleHeader[$key] = [];
+            }
+            self::$_possibleHeader[$key][] = trim(substr($line, $colonPos + 1));
         }
 
         self::$_lineNum++;
