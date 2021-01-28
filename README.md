@@ -8,7 +8,7 @@ While it is advisable to use [Composer](https://getcomposer.org/), this lib is s
 Composer Require entry:
 ```json
 {
-    "dcarbone/curl-header-extractor": "2.0.*"
+    "dcarbone/curl-header-extractor": "v3.0.*"
 }
 ```
 
@@ -16,7 +16,7 @@ Composer Require entry:
 
 There are 3 methods available:
 
-### [getHeaderAndBody](./src/CURLHeaderExtractor.php#L163)
+### [getHeaderAndBody](./src/CURLHeaderExtractor.php#L164)
 
 This method accepts a single argument that may be:
 
@@ -49,7 +49,7 @@ result will be the entire contents of the file loaded into memory.
 
 If you wish to extract JUST the headers, the below methods might serve you better.
 
-### [extractHeadersAndBodyStartOffset](./src/CURLHeaderExtractor.php#L78)
+### [extractHeadersAndBodyStartOffset](./src/CURLHeaderExtractor.php#L77)
 
 This method will return an array with the following structure:
 
@@ -69,7 +69,7 @@ list($headers, $bodyByteOffset) = \DCarbone\CURLHeaderExtractor::extractHeadersA
 If no headers were seen in the file, `$headers` in the above example will be NULL and the byte offset
 will be 0.
 
-### [removeHeadersAndMoveFile](./src/CURLHeaderExtractor.php#L92)
+### [removeHeadersAndMoveFile](./src/CURLHeaderExtractor.php#L98)
 
 This method will strip the file of the headers, copy the body to a new file, and then delete the old file.
 
@@ -79,14 +79,14 @@ This method will strip the file of the headers, copy the body to a new file, and
 \DCarbone\CURLHeaderExtractor::removeHeadersAndMoveFile($file, 'my_new_filename.ext');
 ```
 
-If you executed the [extractHeadersAndBodyStartOffset](./src/CURLHeaderExtractor.php#L78) method
+If you executed the [extractHeadersAndBodyStartOffset](./src/CURLHeaderExtractor.php#L77) method
 already, you may pass in the body start offset integer in as the 3rd argument.
 
 ## Invoking
 
 To make this class easier to work with as a "helper", it implements the 
 [PHP magic method __invoke](http://php.net/manual/en/language.oop5.magic.php#object.invoke) (you
-can see the implementation [here](./src/CURLHeaderExtractor.php#L64)).
+can see the implementation [here](./src/CURLHeaderExtractor.php#L63)).
 
 This allows you to do something like this:
 

@@ -20,13 +20,9 @@
     "extractor"
   ],
   "require": {
-    "php": ">=5.3.3"
+    "php": ">=7.4",
+    "ext-mbstring": "*"
   },
-
-  "require-dev": {
-    "phpunit/phpunit": "4.*"
-  },
-
   "replace": {
     "dcarbone/curl-file-header-extractor": "*"
   },

@@ -1,4 +1,6 @@
-<?php namespace DCarbone;
+<?php declare(strict_types=1);
+
+namespace DCarbone;
 
 /*
     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -17,51 +19,48 @@
  */
 class CURLHeaderExtractor
 {
-    const PROCESSING = 10;
-    const DONE = 20;
+    private const PROCESSING = 10;
+    private const DONE       = 20;
 
-    const PROCMODE_FILE = 100;
-    const PROCMODE_STRING = 200;
+    private const PROCMODE_FILE   = 100;
+    private const PROCMODE_STRING = 200;
 
     /** @var int */
-    public static $maxHeaderLength = 8192;
-    
-    /** @var string */
-    public static $mbEncoding = '8bit';
+    public static int $maxHeaderLength = 8192;
 
     // Setup Vars
 
     /** @var string|resource */
     private static $_input = null;
-    /** @var int  */
-    private static $_mode;
+    /** @var int */
+    private static int $_mode;
     /** @var bool */
-    private static $_closeHandle = true;
+    private static bool $_closeHandle = true;
     /** @var null|resource */
     private static $_fh = null;
 
     // Parsing vars
 
     /** @var array */
-    private static $_headers = array();
+    private static array $_headers = [];
     /** @var int */
-    private static $_lineNum = 0;
+    private static int $_lineNum = 0;
     /** @var int */
-    private static $_rns = 0;
+    private static int $_rns = 0;
     /** @var int */
-    private static $_headerNum = 0;
+    private static int $_headerNum = 0;
     /** @var array */
-    private static $_possibleHeader = array();
+    private static array $_possibleHeader = [];
     /** @var int */
-    private static $_innerHeaderLineCount = 0;
+    private static int $_innerHeaderLineCount = 0;
     /** @var int */
-    private static $_bodyStartByteOffset = 0;
+    private static int $_bodyStartByteOffset = 0;
 
     /**
      * @param resource|string $input
      * @return array
      */
-    function __invoke($input)
+    function __invoke($input): array
     {
         return static::getHeaderAndBody($input);
     }
@@ -75,49 +74,50 @@ class CURLHeaderExtractor
      * @param string $input
      * @return array
      */
-    public static function extractHeadersAndBodyStartOffset($input)
+    public static function extractHeadersAndBodyStartOffset(string $input): array
     {
         self::_setup($input);
 
-        if (self::PROCMODE_FILE === self::$_mode)
+        if (self::PROCMODE_FILE === self::$_mode) {
             self::_processFile();
-        else if (self::PROCMODE_STRING === self::$_mode)
+        } elseif (self::PROCMODE_STRING === self::$_mode) {
             self::_processString();
-        else
+        } else {
             throw new \DomainException('CURLHeaderExtractor - Invalid state');
+        }
 
-        return array(self::$_headers, self::$_bodyStartByteOffset);
+        return [self::$_headers, self::$_bodyStartByteOffset];
     }
 
     /**
      * @param string $currentFile
      * @param string $targetFile
-     * @param int $bodyStartByteOffset
+     * @param int|null $bodyStartByteOffset
      * @return string
      */
-    public static function removeHeadersAndMoveFile($currentFile, $targetFile, $bodyStartByteOffset = null)
-    {
-        if (null === $bodyStartByteOffset)
-            list ($_, $bodyStartByteOffset) = static::extractHeadersAndBodyStartOffset($currentFile);
+    public static function removeHeadersAndMoveFile(
+        string $currentFile,
+        string $targetFile,
+        ?int $bodyStartByteOffset = null
+    ): string {
+        if (null === $bodyStartByteOffset) {
+            [$_, $bodyStartByteOffset] = static::extractHeadersAndBodyStartOffset($currentFile);
+        }
 
         $tfh = fopen($currentFile, 'rb');
-        if ($tfh)
-        {
-             $fh = fopen($targetFile, 'w+b');
+        if ($tfh) {
+            $fh = fopen($targetFile, 'w+b');
 
-            if ($fh)
-            {
+            if ($fh) {
                 fseek($tfh, $bodyStartByteOffset);
-                while (false === feof($tfh) && false !== ($data = fread($tfh, 8192)))
-                {
+                while (false === feof($tfh) && false !== ($data = fread($tfh, 8192))) {
                     fwrite($fh, $data);
                 }
 
                 fclose($tfh);
                 fclose($fh);
 
-                if (false === (bool)@unlink($currentFile))
-                {
+                if (false === (bool)@unlink($currentFile)) {
                     trigger_error(
                         sprintf(
                             '%s:removeHeadersAndMoveFile - Unable to remove temp file "%s"',
@@ -131,18 +131,22 @@ class CURLHeaderExtractor
                 return $targetFile;
             }
 
-            throw new \RuntimeException(sprintf(
-                '%s::removeHeadersAndMoveFile - Unable to open / create / truncate file at "%s".',
-                get_called_class(),
-                $targetFile
-            ));
+            throw new \RuntimeException(
+                sprintf(
+                    '%s::removeHeadersAndMoveFile - Unable to open / create / truncate file at "%s".',
+                    get_called_class(),
+                    $targetFile
+                )
+            );
         }
 
-        throw new \RuntimeException(sprintf(
-            '%s::removeHeadersAndMoveFile - Unable to open temp file "%s".',
-            get_called_class(),
-            $currentFile
-        ));
+        throw new \RuntimeException(
+            sprintf(
+                '%s::removeHeadersAndMoveFile - Unable to open temp file "%s".',
+                get_called_class(),
+                $currentFile
+            )
+        );
     }
 
     /**
@@ -153,11 +157,11 @@ class CURLHeaderExtractor
      *  string $body
      * )
      *
-     * @deprecated
      * @param resource|string $file
      * @return array
+     * @deprecated
      */
-    public static function getHeaderAndBodyFromFile($file)
+    public static function getHeaderAndBodyFromFile($file): array
     {
         return self::getHeaderAndBody($file);
     }
@@ -166,45 +170,41 @@ class CURLHeaderExtractor
      * @param string|resource $input
      * @return array
      */
-    public static function getHeaderAndBody($input)
+    public static function getHeaderAndBody($input): array
     {
-        list ($headers, $byteOffset) = self::extractHeadersAndBodyStartOffset($input);
+        [$headers, $byteOffset] = self::extractHeadersAndBodyStartOffset($input);
 
-        switch(self::$_mode)
-        {
+        switch (self::$_mode) {
             case self::PROCMODE_FILE:
                 $body = '';
 
                 rewind(self::$_fh);
                 fseek(self::$_fh, $byteOffset);
 
-                while (false === feof(self::$_fh) && false !== ($data = fread(self::$_fh, 8192)))
-                {
+                while (false === feof(self::$_fh) && false !== ($data = fread(self::$_fh, 8192))) {
                     $body = sprintf('%s%s', $body, $data);
                 }
 
-                return array($headers, $body);
+                return [$headers, $body];
 
             case self::PROCMODE_STRING:
-                return array(
+                return [
                     $headers,
-                    mb_substr(self::$_input, self::$_bodyStartByteOffset, null, self::$mbEncoding)
-                );
+                    substr(self::$_input, self::$_bodyStartByteOffset),
+                ];
 
             default:
-                return array(null, null);
+                return [null, null];
         }
     }
 
-    private static function _processFile()
+    private static function _processFile(): void
     {
         rewind(self::$_fh);
 
         // Default apache header size is 8KB, hopefully OK for ALL TIME  <( O_O )>
-        while (false !== ($line = fgets(self::$_fh, self::$maxHeaderLength)))
-        {
-            switch(self::_processLine($line))
-            {
+        while (false !== ($line = fgets(self::$_fh, self::$maxHeaderLength))) {
+            switch (self::_processLine($line)) {
                 case self::PROCESSING:
                     continue 2;
                 case self::DONE:
@@ -213,24 +213,23 @@ class CURLHeaderExtractor
         };
     }
 
-    private static function _processString()
+    private static function _processString(): void
     {
         $strPos = 0;
-        $strlen = mb_strlen(self::$_input, self::$mbEncoding);
-        $rnPos = mb_strpos(self::$_input, "\r\n", null, self::$mbEncoding);
+        $strlen = strlen(self::$_input);
+        $rnPos = strpos(self::$_input, "\r\n");
 
         // If the first "\r\n" is beyond the possible header length limit, just move on.
-        if (false === $rnPos || $rnPos > self::$maxHeaderLength)
+        if (false === $rnPos || $rnPos > self::$maxHeaderLength) {
             return;
+        }
 
-        while($strPos < $strlen)
-        {
-            $state = self::_processLine(mb_substr(self::$_input, $strPos, ($rnPos - $strPos) + 2, self::$mbEncoding));
-            switch($state)
-            {
+        while ($strPos < $strlen) {
+            $state = self::_processLine(substr(self::$_input, $strPos, ($rnPos - $strPos) + 2));
+            switch ($state) {
                 case self::PROCESSING:
                     $strPos = $rnPos + 2;
-                    $rnPos = mb_strpos(self::$_input, "\r\n", $strPos, self::$mbEncoding);
+                    $rnPos = strpos(self::$_input, "\r\n", $strPos);
                     continue 2;
                 case self::DONE:
                     return;
@@ -242,21 +241,19 @@ class CURLHeaderExtractor
      * @param string $line
      * @return int
      */
-    private static function _processLine($line)
+    private static function _processLine(string $line): int
     {
-        $httpPos = mb_strpos($line, 'HTTP/', null, self::$mbEncoding);
+        $httpPos = strpos($line, 'HTTP/');
 
         // If we do not have headers in the output...
-        if (0 === self::$_lineNum && 0 !== $httpPos)
-        {
-            self::$_headers = null;
+        if (0 === self::$_lineNum && 0 !== $httpPos) {
+            self::$_headers = [];
             return self::DONE;
         }
 
         // We...probably should just give up.
-        if (self::$_innerHeaderLineCount > 100)
-        {
-            self::$_headers = null;
+        if (self::$_innerHeaderLineCount > 100) {
+            self::$_headers = [];
             return self::DONE;
         }
 
@@ -264,23 +261,22 @@ class CURLHeaderExtractor
         if (self::$_headerNum > 0
             && self::$_innerHeaderLineCount === 0
             && $line !== "\r\n"
-            && 0 !== $httpPos)
-        {
+            && 0 !== $httpPos) {
             return self::DONE;
         }
 
         // Keep track of our current byte offset
-        self::$_bodyStartByteOffset += mb_strlen($line, self::$mbEncoding);
+        self::$_bodyStartByteOffset += strlen($line);
 
         // Keep track of consecutive "\r\n" character pairs
-        if ((0 === self::$_rns && "\r\n" === mb_substr($line, -2, null, self::$mbEncoding)) || "\r\n" === $line)
+        if ((0 === self::$_rns && "\r\n" === substr($line, -2)) || "\r\n" === $line) {
             self::$_rns++;
+        }
 
         // If we've reached 2, we should have successfully parsed a header.
         // Store as header, reset inner header line count, consecutive rn count, and
         // iterate noticed header count.
-        if (2 === self::$_rns)
-        {
+        if (2 === self::$_rns) {
             self::$_headers[] = self::$_possibleHeader;
             self::$_headerNum++;
             self::$_innerHeaderLineCount = 0;
@@ -289,11 +285,12 @@ class CURLHeaderExtractor
         }
 
         // The first line in a header will not have a colon...
-        $colonPos = mb_strpos($line, ':', null, self::$mbEncoding);
-        if (false === $colonPos)
+        $colonPos = strpos($line, ':');
+        if (false === $colonPos) {
             self::$_possibleHeader[] = trim($line);
-        else
-            self::$_possibleHeader[mb_substr($line, 0, $colonPos)] = trim(mb_substr($line, $colonPos + 1));
+        } else {
+            self::$_possibleHeader[substr($line, 0, $colonPos)] = trim(substr($line, $colonPos + 1));
+        }
 
         self::$_lineNum++;
         self::$_innerHeaderLineCount++;
@@ -305,55 +302,47 @@ class CURLHeaderExtractor
      * @param string|resource $input
      * @throws \InvalidArgumentException
      */
-    private static function _setup($input)
+    private static function _setup($input): void
     {
         self::_reset();
 
         $inputType = gettype($input);
 
-        if ('resource' === $inputType)
-        {
+        if ('resource' === $inputType) {
             $meta = stream_get_meta_data($input);
-            if (isset($meta['uri']))
-            {
+            if (isset($meta['uri'])) {
                 self::$_mode = self::PROCMODE_FILE;
                 self::$_input = $meta['uri'];
                 self::$_closeHandle = false;
                 self::$_fh = $input;
-            }
-            else
-            {
+            } else {
                 throw new \InvalidArgumentException('CURLHeaderExtractor - Could not extract filepath from resource.');
             }
-        }
-        else if ('string' === $inputType)
-        {
-            if (@is_file($input))
-            {
+        } elseif ('string' === $inputType) {
+            if (@is_file($input)) {
                 self::$_mode = self::PROCMODE_FILE;
                 self::$_input = $input;
                 self::$_closeHandle = true;
                 self::$_fh = fopen($input, 'rb');
-                if (false === self::$_fh)
-                {
-                    throw new \RuntimeException(sprintf(
-                        'CURLHeaderExtractor - Unable to open file %s for reading.',
-                        $input
-                    ));
+                if (false === self::$_fh) {
+                    throw new \RuntimeException(
+                        sprintf(
+                            'CURLHeaderExtractor - Unable to open file %s for reading.',
+                            $input
+                        )
+                    );
                 }
-            }
-            else
-            {
+            } else {
                 self::$_input = $input;
                 self::$_mode = self::PROCMODE_STRING;
             }
-        }
-        else
-        {
-            throw new \InvalidArgumentException(sprintf(
-                'CURLHeaderExtractor - Invalid input seen. Expected file resource with read permissions, string filepath, or string curl response value.  %s seen.',
-                $inputType
-            ));
+        } else {
+            throw new \InvalidArgumentException(
+                sprintf(
+                    'CURLHeaderExtractor - Invalid input seen. Expected file resource with read permissions, string filepath, or string curl response value.  %s seen.',
+                    $inputType
+                )
+            );
         }
     }
 
@@ -362,19 +351,20 @@ class CURLHeaderExtractor
      */
     private static function _reset()
     {
-        if (self::PROCMODE_FILE === self::$_mode && self::$_closeHandle && 'resource' === gettype(self::$_fh))
+        if (self::PROCMODE_FILE === self::$_mode && self::$_closeHandle && 'resource' === gettype(self::$_fh)) {
             fclose(self::$_fh);
+        }
 
         self::$_input = null;
-        self::$_mode = null;
+        self::$_mode = 0;
         self::$_closeHandle = true;
         self::$_fh = null;
 
-        self::$_headers = array();
+        self::$_headers = [];
         self::$_lineNum = 0;
         self::$_rns = 0;
         self::$_headerNum = 0;
-        self::$_possibleHeader = array();
+        self::$_possibleHeader = [];
         self::$_innerHeaderLineCount = 0;
         self::$_bodyStartByteOffset = 0;
     }
