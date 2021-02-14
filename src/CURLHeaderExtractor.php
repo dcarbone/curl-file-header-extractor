@@ -228,7 +228,7 @@ class CURLHeaderExtractor
             return;
         }
 
-        while ($strPos < $strlen) {
+        while ($strPos < $strlen && $strPos <= $rnPos) {
             $state = self::_processLine(substr(self::$_input, $strPos, ($rnPos - $strPos) + 2));
             switch ($state) {
                 case self::PROCESSING:
